@@ -121,14 +121,14 @@ either reverse payer wallet or retry adding to payee wallet based on business ru
 # Running all this
 
 #### step 1
-run Alice's server `up-alice.sh`
+run Alice's server `up-alice.sh` located in project home directory
 
-run Bob's server `up-bob.sh`
+run Bob's server `up-bob.sh` located in project home directory.
 
 this will start Alice and Bob's servers
 
 #### step 2
-run `run-transfer.sh`
+run `run-transfer.sh` located in project home directory.
 
 This will transfer 10 units from Alice to Bob 
 
