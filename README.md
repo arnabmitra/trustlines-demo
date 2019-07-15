@@ -26,12 +26,14 @@ redirect requests if necessary(not happening here)
 
 * bob's server
 * alice's server
-* orchestrator (initiates payment requests from Alice to bob in this use case)
+* orchestrator (initiates payment requests from Alice to bob in this use case, imo trusted network admin)
 
 
 ## Client
 
-This repo provides a client for all the above network components to interact with each other
+This repo provides a client for all the above network components to interact with each other, they use 
+`Feign` (OpenFeign) to provide a declarative web client.
+
 
 ## Payment process.
 This deviates a little from the original problem describes in that i bring in approval step for mainly proving that 
@@ -103,20 +105,46 @@ The approval step with response signature may help with retries, since approval 
 been generated once.
 
 
+So to sum it up these are the steps(All steps include sending authentication headers)
+1.Orchestrate start of transfer from a trusted network component(Orchestator) by sending a transfer approval request
+2.Payer(Alice) approves it, attaches a ECDSA signature of the payload it approves.
+3.Orchestrator sends payment request with signature of approved payload, 
+4.Payer checks for idempotency (i.e if it has already paid out, rejects if so)
+5.Payer if request not paid decreases it balance and calls payee to pay the amount.
+6.Payee makes sure it has not processed transfer request already (idempotency check, non-byzantine network)
+7.Payee adds to his balance if not already processed, returns transaction uuid indicating success
+8.Not build, but if failure retry, if still not success throw exception to orchestrator and have that
+either reverse payer wallet or retry adding to payee wallet based on business rules.
 
-# Getting Started
 
-## step 1
-run `up.sh`
+
+# Running all this
+
+#### step 1
+run Alice's server `up-alice.sh`
+
+run Bob's server `up-bob.sh`
 
 this will start Alice and Bob's servers
 
-# step 2
-run `transfer.sh`
+#### step 2
+run `run-transfer.sh`
 
-This will transfer 
+This will transfer 10 units from Alice to Bob 
 
 
-Alice Transfer 10 units to bob using TrustLine transfer object
+# What should be done if this ever is useful in real life
+* All keys should be got from a KMS system
 
-It uses ECDSA to sign the transfer request object meant for the recipient of the object to verify that 
+* In real life these should be a common docker image, with unique properties injected in via some
+ mechanism (probably consul or some other mechanism)
+
+
+* All events should be stored in a DB of each trustline server, that way all state may be event sourced 
+ when starting fresh
+ 
+* some kindof persistent storage should be used on each server for balance etc, db's like postgres
+do locking etc very well and should be used unless there are use cases that prevent it.
+
+# TODO
+clean up dependency version in gradle kotlin dsl files
