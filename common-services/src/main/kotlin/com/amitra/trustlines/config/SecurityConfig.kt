@@ -40,7 +40,7 @@ class SecurityConfig : WebSecurityConfigurerAdapter() {
                 .headers().frameOptions().disable()
 
         http.authorizeRequests()
-                .antMatchers("/**").hasAnyRole()
+                .antMatchers("/**").hasAnyRole("USER")
                 .anyRequest()
                 .authenticated()
                 .and()

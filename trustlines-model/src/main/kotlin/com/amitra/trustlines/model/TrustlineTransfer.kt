@@ -9,6 +9,7 @@ data class TrustlineTransfer(
         val toEntityName: String,
         val fromEntityUUID: UUID,
         val fromEntityName: String,
+        val authcode: String,
         val amount: BigDecimal
 ) {
     fun toTrustLineResponse(signatureOfApproval: String): TrustlineTransferResponse {
@@ -17,6 +18,7 @@ data class TrustlineTransfer(
                 toEntityName = this.toEntityName,
                 fromEntityName = this.fromEntityName,
                 amount = this.amount,
+                authcode = this.authcode,
                 signatureOfApproval = signatureOfApproval
         )
     }
@@ -29,6 +31,7 @@ data class TrustlineTransferResponse(
         val fromEntityUUID: UUID,
         val fromEntityName: String,
         val amount: BigDecimal,
+        val authcode:String,
         val signatureOfApproval: String //base 64 encode ECDSA signature..
 ) {
     fun toTrustLineWithSig(port:Int): TrustlineTransferWithSig {
@@ -37,6 +40,7 @@ data class TrustlineTransferResponse(
                 toEntityName = this.toEntityName,
                 fromEntityName = this.fromEntityName,
                 amount = this.amount,
+                authcode = this.authcode,
                 signatureOfApproval = this.signatureOfApproval,
                 toEntityPort = port
         )
@@ -52,6 +56,7 @@ data class TrustlineTransferWithSig(
         val fromEntityUUID: UUID,
         val fromEntityName: String,
         val amount: BigDecimal,
+        val authcode:String,
         val signatureOfApproval: String //base 64 encode ECDSA signature..
 ){
     fun toTrustLine(): TrustlineTransfer {
@@ -60,8 +65,8 @@ data class TrustlineTransferWithSig(
                 fromEntityUUID = this.fromEntityUUID,
                 toEntityName = this.toEntityName,
                 fromEntityName = this.fromEntityName,
-                amount = this.amount
-
+                amount = this.amount,
+                authcode = this.authcode
         )
     }
 }

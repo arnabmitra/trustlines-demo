@@ -66,7 +66,6 @@ fun main(args: Array<String>) {
     userKeyForAliceCalls = Base64.encode(signer.sign(aliceUUID.toByteArray()))
     userKeyForBobCalls = Base64.encode(signer.sign(bobUUID.toByteArray()))
 
-    println("Starting Orchestration!!!")
 
     val balance = clientAlice.getTrustLineBalance(uuidAlice(), userKeyForAliceCalls)
     println("Current Balance of Alice's trustline is $balance")
@@ -74,14 +73,21 @@ fun main(args: Array<String>) {
     val balanceBob = clientBob.getTrustLineBalance(uuidBob(), userKeyForBobCalls)
     println("Current Balance of Bob's trustline is $balanceBob")
 
+    println("Starting Transfer!!!")
+
     val trustlineTransfer = TrustlineTransfer(transferId = UUID.randomUUID(), amount = BigDecimal("10"),
-            fromEntityName = "Alice", fromEntityUUID = uuidAlice(), toEntityName = "Bob", toEntityUUID = UUID.fromString(bobUUID))
+            fromEntityName = "Alice", fromEntityUUID = uuidAlice(), toEntityName = "Bob", toEntityUUID = UUID.fromString(bobUUID), authcode = "TEST_CODE")
     val trustLineResponse = clientAlice.trustlineApproval(uuidAlice(), userKeyForAliceCalls, trustlineTransfer)
 
     val toSend = trustLineResponse.toTrustLineWithSig(8421)
     val trustLinePayerResponse = clientAlice.transferOutOfPayer(uuidAlice(), userKeyForAliceCalls, toSend)
 
-    println("Orchestration Ended!!!")
+    println("Transfer Ended!!!")
+    val balanceEnd = clientAlice.getTrustLineBalance(uuidAlice(), userKeyForAliceCalls)
+    println("Current Balance of Alice's trustline is $balanceEnd")
+
+    val balanceBobEnd = clientBob.getTrustLineBalance(uuidBob(), userKeyForBobCalls)
+    println("Current Balance of Bob's trustline is $balanceBobEnd")
 
 
 }

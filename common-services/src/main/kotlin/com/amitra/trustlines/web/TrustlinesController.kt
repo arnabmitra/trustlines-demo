@@ -1,5 +1,6 @@
 package com.amitra.trustlines.web
 
+import com.amitra.trustlines.client.Client
 import com.amitra.trustlines.client.ClientBuilder
 import com.amitra.trustlines.model.TrustlineTransfer
 import com.amitra.trustlines.model.TrustlineTransferResponse
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import javax.servlet.http.HttpServletRequest
 
 @RestController
@@ -28,6 +30,8 @@ class TrustlinesController(private val trustlineService: TrustlineService) {
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
     val USER_KEY_HEADER = "user-key"
+
+    private val clients = ConcurrentHashMap<UUID,Client>()
 
     /**
      *Get TrustLine balance
@@ -58,9 +62,7 @@ class TrustlinesController(private val trustlineService: TrustlineService) {
     @ApiOperation(value = "Transfers money out of Account..")
     fun transfer(@RequestBody trustLineTransfer: TrustlineTransferWithSig, httpServletRequest: HttpServletRequest): UUID {
 
-        val client = ClientBuilder("http://localhost:${trustLineTransfer.toEntityPort}/${trustLineTransfer.toEntityName.toLowerCase()}", 10 * 1000, 120 * 1000).client
-        //cheating here with the network key IRL key may have rotated hence create it again through KMS
-        val userKey = httpServletRequest.getHeader(USER_KEY_HEADER)
+        val client =  clients.getOrPut(trustLineTransfer.toEntityUUID) {ClientBuilder("http://localhost:${trustLineTransfer.toEntityPort}/${trustLineTransfer.toEntityName.toLowerCase()}", 10 * 1000, 120 * 1000).client}
 
         return trustlineService.performTransfer(trustLineTransfer,client)
     }

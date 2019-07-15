@@ -1,10 +1,6 @@
 package com.amitra.trustlines.service
 
 import com.amitra.trustlines.client.Client
-import com.amitra.trustlines.client.aliceUUID
-import com.amitra.trustlines.client.privateKeyKeyInfoJson
-import com.amitra.trustlines.client.userKeyForAliceCalls
-import com.amitra.trustlines.client.userKeyForBobCalls
 import com.amitra.trustlines.model.TrustlineTransfer
 import com.amitra.trustlines.model.TrustlineTransferResponse
 import com.amitra.trustlines.model.TrustlineTransferWithSig
@@ -96,9 +92,13 @@ class TrustlineService(val appProperties: AppProperties, val objectMapper: Objec
         try {
             val trustLinePayeeResponse = client.sendToPayee(trustlineTransferWithSig.toEntityUUID,
                     createNetworkKey(trustlineTransferWithSig.toEntityUUID.toString()), trustlineTransferWithSig)
+            //if you uncomment these line below, throws idempotent check exception :success:
+//             client.sendToPayee(trustlineTransferWithSig.toEntityUUID,
+//                    createNetworkKey(trustlineTransferWithSig.toEntityUUID.toString()), trustlineTransferWithSig)
         }catch (ex:RuntimeException)
         {
-            //log and rethreow
+            //log and rethrow
+            //assumption is that someone will retry this request to the payee(probably the orchestrator).. hence not reversing for now
             logger.error("Send unsuccessful ")
             logger.error("Send unsuccessful with exception",ex)
 
