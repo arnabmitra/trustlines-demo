@@ -10,17 +10,25 @@ import java.security.GeneralSecurityException
 import com.google.crypto.tink.JsonKeysetWriter
 import com.google.crypto.tink.CleartextKeysetHandle
 import com.google.crypto.tink.JsonKeysetReader
+import com.google.crypto.tink.hybrid.HybridKeyTemplates
 import org.junit.Before
 import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
 import java.util.Base64
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import com.google.crypto.tink.hybrid.HybridDecryptFactory
+import com.google.crypto.tink.HybridDecrypt
+import com.google.crypto.tink.hybrid.HybridEncryptFactory
+import com.google.crypto.tink.HybridEncrypt
+
+
 
 
 class TestEncryption {
 
     private val DATA = "DANK"
+    var contextInfo = "FOO"
     @Before
     fun before() {
         TinkConfig.register()
@@ -59,6 +67,38 @@ class TestEncryption {
         assertTrue { verifier.verify(signature, DATA.toByteArray()) == Unit }
 
     }
+
+    @Test
+    @Throws(GeneralSecurityException::class)
+    fun givenSignData_thenHybridEnc_generatedKeys() {
+
+        val privateKeysetHandle = KeysetHandle.generateNew(
+                HybridKeyTemplates.ECIES_P256_HKDF_HMAC_SHA256_AES128_CTR_HMAC_SHA256)
+
+        println("\nPrinting out key:")
+        val outputStream = ByteArrayOutputStream()
+        CleartextKeysetHandle.write(privateKeysetHandle, JsonKeysetWriter.withOutputStream(outputStream))
+        println(String(outputStream.toByteArray()))
+
+        println("\nPrinting out Public key:")
+
+        val publicKeysetHandle = privateKeysetHandle.publicKeysetHandle
+        val outputStreamPub = ByteArrayOutputStream()
+
+        CleartextKeysetHandle.write(publicKeysetHandle, JsonKeysetWriter.withOutputStream(outputStreamPub))
+        println(String(outputStreamPub.toByteArray()))
+
+        val hybridEncrypt = HybridEncryptFactory.getPrimitive(publicKeysetHandle)
+        val hybridDecrypt = HybridDecryptFactory.getPrimitive(privateKeysetHandle)
+
+        val ciphertext = hybridEncrypt.encrypt(DATA.toByteArray(), contextInfo.toByteArray())
+        val plaintextDecrypted = hybridDecrypt.decrypt(ciphertext, contextInfo.toByteArray())
+
+        println(String(plaintextDecrypted))
+        assertTrue { String(plaintextDecrypted) == DATA }
+
+    }
+
 
     @Test
     @Throws(GeneralSecurityException::class)
